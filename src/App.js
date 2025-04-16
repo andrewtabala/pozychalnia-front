@@ -7,7 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 const App = () => {
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <Routes>
         {/* Public route for login */}
         <Route path="/login" element={<Login />} />
