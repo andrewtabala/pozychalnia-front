@@ -1,11 +1,11 @@
 {
   "files": {
-    "main.js": "/pozychalnia-front/static/js/main.d0b379a4.js",
+    "main.js": "/pozychalnia-front/static/js/main.4b077c0c.js",
     "static/media/logo.png": "/pozychalnia-front/static/media/logo.37ce193def21688c4019.png",
     "index.html": "/pozychalnia-front/index.html",
-    "main.d0b379a4.js.map": "/pozychalnia-front/static/js/main.d0b379a4.js.map"
+    "main.4b077c0c.js.map": "/pozychalnia-front/static/js/main.4b077c0c.js.map"
   },
   "entrypoints": [
-    "static/js/main.d0b379a4.js"
+    "static/js/main.4b077c0c.js"
   ]
 }
