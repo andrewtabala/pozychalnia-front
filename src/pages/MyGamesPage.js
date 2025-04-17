@@ -17,6 +17,7 @@ import {
     List,
     ListItem,
     ListItemText,
+    CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/AddCircle';
@@ -109,12 +110,13 @@ export default function MyGamesPage() {
         setCurrentGame({ title: '', platform: '', available: 'yes', imageUrl: '' });
         setRawgOptions([]);
     };
-    const handleSave = async () => { 
-        await bulkCreateGames(gamesToAdd); 
-        setGamesToAdd([]); 
+    const handleSave = async () => {
+        await bulkCreateGames(gamesToAdd);
+        setGamesToAdd([]);
         setIsAdding(false);
-        setHasQueuedGames(false); 
-        loadUsers(); };
+        setHasQueuedGames(false);
+        loadUsers();
+    };
 
     const tint = g => g.borrowedByMe ? { bgcolor: 'rgba(255,0,0,0.1)' } : (!g.available ? { bgcolor: 'rgba(0,0,0,0.05)' } : {});
 
@@ -122,112 +124,120 @@ export default function MyGamesPage() {
         <Box sx={{ display: 'flex', width: '100%' }}>
             <Box sx={{ width: '100%', flexGrow: 1, width: "100% !important" }}>
                 <Header page="Мої ігри" />
-                <Container sx={{ py: 2 }}>
-                    {!isAdding ? (
-                        <>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                                <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>Додати Ігри</Button>
-                            </Box>
-                            <Grid container spacing={2}>
-                                {games.map(g => (
-                                    <Grid item size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={g._id}>
-                                        <GameCard
-                                            game={g}
-                                            onDelete={() => handleDelete(g._id)}
-                                            onReturn={() => handleReturn(g._id)}
-                                            ownerMap={usersMap}
-                                            usersMap={usersMap}
-                                            currentUserId={currentUserId}
-                                        />
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </>
+                <>
+                    {games.length === 0 ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)' }}>
+                            <CircularProgress />
+                        </Box>
                     ) : (
-                        <Box>
-                            <Typography variant="h6" gutterBottom>Додати гру</Typography>
-                            <Autocomplete
-                                options={rawgOptions}
-                                getOptionLabel={o => o.name || ''}
-                                onInputChange={handleSearchChange}
-                                onChange={handleSelect}
-                                renderInput={params => <TextField {...params} label="Назва" fullWidth sx={{ mb: 2 }} required />}
-                            />
-                            <TextField
-                                select
-                                label="Платформа"
-                                value={currentGame.platform}
-                                onChange={e => handleChange('platform', e.target.value)}
-                                fullWidth
-                                sx={{ mb: 2 }}
-                                required
-                            >
-                                {['Switch', 'PS5', 'PS4', 'Xbox'].map(v => (
-                                    <MenuItem key={v} value={v}>{v}</MenuItem>
-                                ))}
-                            </TextField>
-                            <TextField
-                                select
-                                label="Вільно для позики"
-                                value={currentGame.available}
-                                onChange={e => handleChange('available', e.target.value)}
-                                fullWidth
-                                sx={{ mb: 2 }}
-                                required
-                            >
-                                <MenuItem value="yes">Так</MenuItem>
-                                <MenuItem value="no">Ні</MenuItem>
-                            </TextField>
-                            <Box sx={{ display: 'flex', justifyContent: "space-between", gap: 2, mb: 2 }}>
-                                <Box sx={{display: "flex", gap: 2}}>
-                                    <Button
-                                        variant="contained"
-                                        disabled={!currentGame.title || !currentGame.platform || !currentGame.available}
-                                        onClick={handleOk}
-                                    >
-                                        Додати
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        color="success"
-                                        disabled={!hasQueuedGames}
-                                        onClick={handleSave}
-                                    >
-                                        Зберегти все
-                                    </Button>
-                                </Box>
-                                <Button variant="outlined" onClick={handleCancel}>Відмінити</Button>
-                            </Box>
-
-                            {gamesToAdd.length > 0 && (
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography variant="subtitle1">Ігри, що будуть додані:</Typography>
-                                    <List>
-                                        {gamesToAdd.map((g, idx) => (
-                                            <ListItem
-                                                key={idx}
-                                                secondaryAction={
-                                                    <IconButton edge="end" onClick={() => {
-                                                        setGamesToAdd(prev => prev.filter((_, i) => i !== idx));
-                                                        if (gamesToAdd.length - 1 === 0) setHasQueuedGames(false);
-                                                    }}
-                                                    >
-                                                        <CloseIcon />
-                                                    </IconButton>
-                                                }
-                                            >
-                                                <ListItemText
-                                                    primary={g.title}
-                                                    secondary={`${renderPlatformLabel(g.platform)} — ${g.available === 'yes' ? 'Вільно' : 'Ні'}`}
+                        <Container sx={{ py: 2 }}>
+                            {!isAdding ? (
+                                <>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                                        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>Додати Ігри</Button>
+                                    </Box>
+                                    <Grid container spacing={2}>
+                                        {games.map(g => (
+                                            <Grid item size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={g._id}>
+                                                <GameCard
+                                                    game={g}
+                                                    onDelete={() => handleDelete(g._id)}
+                                                    onReturn={() => handleReturn(g._id)}
+                                                    ownerMap={usersMap}
+                                                    usersMap={usersMap}
+                                                    currentUserId={currentUserId}
                                                 />
-                                            </ListItem>
+                                            </Grid>
                                         ))}
-                                    </List>
+                                    </Grid>
+                                </>
+                            ) : (
+                                <Box>
+                                    <Typography variant="h6" gutterBottom>Додати гру</Typography>
+                                    <Autocomplete
+                                        options={rawgOptions}
+                                        getOptionLabel={o => o.name || ''}
+                                        onInputChange={handleSearchChange}
+                                        onChange={handleSelect}
+                                        renderInput={params => <TextField {...params} label="Назва" fullWidth sx={{ mb: 2 }} required />}
+                                    />
+                                    <TextField
+                                        select
+                                        label="Платформа"
+                                        value={currentGame.platform}
+                                        onChange={e => handleChange('platform', e.target.value)}
+                                        fullWidth
+                                        sx={{ mb: 2 }}
+                                        required
+                                    >
+                                        {['Switch', 'PS5', 'PS4', 'Xbox'].map(v => (
+                                            <MenuItem key={v} value={v}>{v}</MenuItem>
+                                        ))}
+                                    </TextField>
+                                    <TextField
+                                        select
+                                        label="Вільно для позики"
+                                        value={currentGame.available}
+                                        onChange={e => handleChange('available', e.target.value)}
+                                        fullWidth
+                                        sx={{ mb: 2 }}
+                                        required
+                                    >
+                                        <MenuItem value="yes">Так</MenuItem>
+                                        <MenuItem value="no">Ні</MenuItem>
+                                    </TextField>
+                                    <Box sx={{ display: 'flex', justifyContent: "space-between", gap: 2, mb: 2 }}>
+                                        <Box sx={{ display: "flex", gap: 2 }}>
+                                            <Button
+                                                variant="contained"
+                                                disabled={!currentGame.title || !currentGame.platform || !currentGame.available}
+                                                onClick={handleOk}
+                                            >
+                                                Додати
+                                            </Button>
+                                            <Button
+                                                variant="contained"
+                                                color="success"
+                                                disabled={!hasQueuedGames}
+                                                onClick={handleSave}
+                                            >
+                                                Зберегти все
+                                            </Button>
+                                        </Box>
+                                        <Button variant="outlined" onClick={handleCancel}>Відмінити</Button>
+                                    </Box>
+
+                                    {gamesToAdd.length > 0 && (
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant="subtitle1">Ігри, що будуть додані:</Typography>
+                                            <List>
+                                                {gamesToAdd.map((g, idx) => (
+                                                    <ListItem
+                                                        key={idx}
+                                                        secondaryAction={
+                                                            <IconButton edge="end" onClick={() => {
+                                                                setGamesToAdd(prev => prev.filter((_, i) => i !== idx));
+                                                                if (gamesToAdd.length - 1 === 0) setHasQueuedGames(false);
+                                                            }}
+                                                            >
+                                                                <CloseIcon />
+                                                            </IconButton>
+                                                        }
+                                                    >
+                                                        <ListItemText
+                                                            primary={g.title}
+                                                            secondary={`${renderPlatformLabel(g.platform)} — ${g.available === 'yes' ? 'Вільно' : 'Ні'}`}
+                                                        />
+                                                    </ListItem>
+                                                ))}
+                                            </List>
+                                        </Box>
+                                    )}
                                 </Box>
                             )}
-                        </Box>
+                        </Container>
                     )}
-                </Container>
+                </>
             </Box>
         </Box>
     );

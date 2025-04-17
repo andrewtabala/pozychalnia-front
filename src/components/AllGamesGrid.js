@@ -13,6 +13,7 @@ import {
     FormControl,
     Select,
     Button,
+    CircularProgress,
 } from '@mui/material';
 import { getGames } from '../api/games';
 import { getUserById, getUsers } from '../api/users';
@@ -146,88 +147,96 @@ const AllGamesGrid = (props) => {
     };
 
     return (
-        <Box sx={{ p: 2 }}>
-            {/* Filters */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                <FormControl sx={{ minWidth: 180 }}>
-                    <InputLabel>Сортування</InputLabel>
-                    <Select
-                        value={sortOption}
-                        label="Сортування"
-                        onChange={e => setSortOption(e.target.value)}
-                    >
-                        <MenuItem value="title-asc">A-Z</MenuItem>
-                        <MenuItem value="title-desc">Z-A</MenuItem>
-                        <MenuItem value="date-asc">Старіші спочатку</MenuItem>
-                        <MenuItem value="date-desc">Новіші спочатку</MenuItem>
-                    </Select>
-                </FormControl>
-                <TextField
-                    label="Пошук"
-                    variant="outlined"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    sx={{ flex: 1 }}
-                />
-                <FormControl variant="outlined" sx={{ minWidth: 100 }} >
-                    <InputLabel id="platform-filter-label">Платформа</InputLabel>
-                    <Select
-                        labelId="platform-filter-label"
-                        label="Платформа"
-                        value={platformFilter}
-                        onChange={(e) => setPlatformFilter(e.target.value)}
-                    >
-                        <MenuItem value="all">Всі</MenuItem>
-                        <MenuItem value="Switch">Switch</MenuItem>
-                        <MenuItem value="PS5">PS5</MenuItem>
-                        <MenuItem value="PS4">PS4</MenuItem>
-                        <MenuItem value="Xbox">Xbox</MenuItem>
-                    </Select>
-                </FormControl>
-                <FormControl sx={{ minWidth: 100 }} >
-                    <InputLabel>Статус</InputLabel>
-                    <Select
-                        value={availabilityFilter}
-                        label="Статус"
-                        onChange={e => setAvailabilityFilter(e.target.value)}
-                    >
-                        <MenuItem value="all">Всі</MenuItem>
-                        <MenuItem value="available">Вільні</MenuItem>
-                        <MenuItem value="unavailable">Позичені</MenuItem>
-                    </Select>
-                </FormControl>
-                <FormControl sx={{ minWidth: 100 }} >
-                    <InputLabel>Власник</InputLabel>
-                    <Select
-                        value={ownerFilter}
-                        label="Власник"
-                        onChange={e => setOwnerFilter(e.target.value)}
-                    >
-                        <MenuItem value="all">Всі</MenuItem>
-                        {Object.entries(ownerMap).map(([id, user]) => (
-                            <MenuItem key={id} value={id}>
-                                {user.username}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-            </Box>
+        <>
+            {games.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)' }}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <Box sx={{ p: 2 }}>
+                    {/* Filters */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                        <FormControl sx={{ minWidth: 180 }}>
+                            <InputLabel>Сортування</InputLabel>
+                            <Select
+                                value={sortOption}
+                                label="Сортування"
+                                onChange={e => setSortOption(e.target.value)}
+                            >
+                                <MenuItem value="title-asc">A-Z</MenuItem>
+                                <MenuItem value="title-desc">Z-A</MenuItem>
+                                <MenuItem value="date-asc">Старіші спочатку</MenuItem>
+                                <MenuItem value="date-desc">Новіші спочатку</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            label="Пошук"
+                            variant="outlined"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            sx={{ flex: 1 }}
+                        />
+                        <FormControl variant="outlined" sx={{ minWidth: 100 }} >
+                            <InputLabel id="platform-filter-label">Платформа</InputLabel>
+                            <Select
+                                labelId="platform-filter-label"
+                                label="Платформа"
+                                value={platformFilter}
+                                onChange={(e) => setPlatformFilter(e.target.value)}
+                            >
+                                <MenuItem value="all">Всі</MenuItem>
+                                <MenuItem value="Switch">Switch</MenuItem>
+                                <MenuItem value="PS5">PS5</MenuItem>
+                                <MenuItem value="PS4">PS4</MenuItem>
+                                <MenuItem value="Xbox">Xbox</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl sx={{ minWidth: 100 }} >
+                            <InputLabel>Статус</InputLabel>
+                            <Select
+                                value={availabilityFilter}
+                                label="Статус"
+                                onChange={e => setAvailabilityFilter(e.target.value)}
+                            >
+                                <MenuItem value="all">Всі</MenuItem>
+                                <MenuItem value="available">Вільні</MenuItem>
+                                <MenuItem value="unavailable">Позичені</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl sx={{ minWidth: 100 }} >
+                            <InputLabel>Власник</InputLabel>
+                            <Select
+                                value={ownerFilter}
+                                label="Власник"
+                                onChange={e => setOwnerFilter(e.target.value)}
+                            >
+                                <MenuItem value="all">Всі</MenuItem>
+                                {Object.entries(ownerMap).map(([id, user]) => (
+                                    <MenuItem key={id} value={id}>
+                                        {user.username}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
 
-            {/* Grid of games */}
-            <Grid container spacing={2}>
-                {filteredGames.map((game) => (
-                    <Grid key={game._id} item size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                        {/* Game card */}
-                        <GameCard
-                            game={game}
-                            requested={requestedGame === game._id}
-                            usersMap={usersMap}
-                            currentUserId={currentUserId}
-                            onRequest={() => handleRequest(game._id)} />
+                    {/* Grid of games */}
+                    <Grid container spacing={2}>
+                        {filteredGames.map((game) => (
+                            <Grid key={game._id} item size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                                {/* Game card */}
+                                <GameCard
+                                    game={game}
+                                    requested={requestedGame === game._id}
+                                    usersMap={usersMap}
+                                    currentUserId={currentUserId}
+                                    onRequest={() => handleRequest(game._id)} />
+                            </Grid>
+                        ))}
                     </Grid>
-                ))}
-            </Grid>
-        </Box>
+                </Box>
+            )}
+        </>
     );
 };
 
