@@ -10,53 +10,15 @@ import AllGamesGrid from '../components/AllGamesGrid';
 
 const Home = () => {
 
-    const [isModalOpen, setModalOpen] = useState(false);
-    const [isMyGamesOpen, setMyGamesOpen] = useState(false);
-
-    const onSidebarButtonClick = (button) => {
-        if (button === 'позики') {
-            handleOpenModal(); // Open the modal when the button is clicked
-        } else if (button === 'мої ігри') {
-            handleOpenMyGames(); // Open the My Games modal when the button is clicked
-        } else if (button === 'my profile') {
-            // Navigate to My Profile page
-        }
-    }
-
-    const handleOpenModal = () => {
-        setModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setModalOpen(false);
-    };
-
-    const handleOpenMyGames = () => {
-        setMyGamesOpen(true);
-    }
-
-    const handleCloseMyGames = () => {
-        setMyGamesOpen(false);
-    }
-
     return (
-        <Box sx={{ display: 'flex' }}>
-            <Sidebar onButtonClick={onSidebarButtonClick} />
+        <Box sx={{ display: 'flex', width: "100%" }}>
             {/* Main content area */}
-            <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
-                <Header />  {/* Optionally, include your header at the top */}
+            <Box component="main" sx={{ flexGrow: 1, p: 0, width: "100% !important" }}>
+                <Header page="Позичальня" />  {/* Optionally, include your header at the top */}
                 <Box sx={{ p: 3 }}>
                     <AllGamesGrid isModalOpen isMyGamesOpen /> {/* Your main content, e.g., a grid of games */}
                 </Box>
             </Box>
-            <BorrowRequestsModal
-                open={isModalOpen}
-                onClose={handleCloseModal}
-            />
-            <MyGamesModal
-                open={isMyGamesOpen}
-                onClose={handleCloseMyGames}
-            />
         </Box>
     );
 };
