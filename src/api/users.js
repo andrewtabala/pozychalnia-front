@@ -16,6 +16,16 @@ export const getUsers = async () => {
   }
 };
 
+export const updateTelegramContact = async (userId, telegramContact) => {
+  try {
+    const response = await axiosInstance.put(`/users/${userId}/update-telegram-contact`, { telegramContact });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 /**
  * Fetch a single user by ID (omitting sensitive data like passwords).
  * GET /users/:id

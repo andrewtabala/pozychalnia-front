@@ -18,6 +18,7 @@ import {
     ListItem,
     ListItemText,
     CircularProgress,
+    Modal,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/AddCircle';
@@ -25,7 +26,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useNavigate } from 'react-router-dom';
 
 // API
-import { getGames, bulkCreateGames, deleteGame } from '../api/games';
+import { getGames, bulkCreateGames, updateGame, deleteGame } from '../api/games';
 import { getBorrowedGames, returnLoan } from '../api/loans';
 import { searchRawgTitles } from '../api/rawg';
 import { getUsers } from '../api/users';
@@ -50,10 +51,12 @@ export default function MyGamesPage() {
     const [games, setGames] = useState([]);
     const [isAdding, setIsAdding] = useState(false);
     const [gamesToAdd, setGamesToAdd] = useState([]);
-    const [currentGame, setCurrentGame] = useState({ title: '', platform: '', available: 'yes', imageUrl: '' });
+    const [currentGame, setCurrentGame] = useState({ title: '', platform: '', available: true, imageUrl: '' });
     const [hasQueuedGames, setHasQueuedGames] = useState(false);
     const [rawgOptions, setRawgOptions] = useState([]);
     const [usersMap, setUsersMap] = useState({});
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editGameId, setEditGameId] = useState(null);
 
     const getData = useCallback(async (map) => {
         const allGames = await getGames();
@@ -86,7 +89,13 @@ export default function MyGamesPage() {
         setHasQueuedGames(false);
     };
     const handleDelete = async (id) => {
-        if (window.confirm('Точно видалити гру?')) { await deleteGame(id); loadUsers(); }
+        if (window.confirm('Точно видалити гру?')) {
+            setEditModalOpen(false);
+            setEditGameId(null);
+            setCurrentGame({ title: '', platform: '', available: true, imageUrl: '' });
+            await deleteGame(id);
+            loadUsers();
+        }
     }
     const handleReturn = async (id) => {
         if (window.confirm('Чи повернули гру?')) { await returnLoan(id); loadUsers(); }
@@ -103,13 +112,16 @@ export default function MyGamesPage() {
         if (val) setCurrentGame(prev => ({ ...prev, title: val.name, imageUrl: val.background_image }));
         else setCurrentGame(prev => ({ ...prev, title: '', imageUrl: '' }));
     };
+
     const handleChange = (f, v) => setCurrentGame(prev => ({ ...prev, [f]: v }));
+
     const handleOk = () => {
         setGamesToAdd(prev => [...prev, currentGame]);
         setHasQueuedGames(true);
-        setCurrentGame({ title: '', platform: '', available: 'yes', imageUrl: '' });
+        setCurrentGame({ title: '', platform: '', available: true, imageUrl: '' });
         setRawgOptions([]);
     };
+
     const handleSave = async () => {
         await bulkCreateGames(gamesToAdd);
         setGamesToAdd([]);
@@ -118,14 +130,56 @@ export default function MyGamesPage() {
         loadUsers();
     };
 
-    const tint = g => g.borrowedByMe ? { bgcolor: 'rgba(255,0,0,0.1)' } : (!g.available ? { bgcolor: 'rgba(0,0,0,0.05)' } : {});
+    const handleOnEditClick = (game_id) => {
+        setEditModalOpen(true);
+        setEditGameId(game_id);
+        const game = games.find(g => g._id === game_id);
+        if (game) {
+            setCurrentGame({
+                title: game.title,
+                platform: game.platform,
+                available: game.available,
+                imageUrl: game.imageUrl || ''
+            });
+            handleSearchChange(null, game.title);
+        }
+    }
+
+    const handleCloseEditModal = () => {
+        setEditModalOpen(false);
+        setEditGameId(null);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!currentGame.title || !currentGame.platform) {
+            alert('Будь ласка, заповніть всі поля перед збереженням.');
+            return;
+        }
+        const updatedGame = { ...games.find(g => g._id === editGameId), ...currentGame, _id: editGameId };
+        console.log('Updating game:', updatedGame);
+        
+        try {
+            await updateGame(editGameId, updatedGame);
+        } catch (error) {
+            console.error('Error updating game:', error);
+            alert('Помилка при збереженні гри. Будь ласка, спробуйте ще раз.');
+            return
+        }
+        loadUsers();
+        setEditModalOpen(false);
+        setEditGameId(null);
+        setCurrentGame({ title: '', platform: '', available: true, imageUrl: '' });
+        setRawgOptions([]);
+    }
+
+    // const tint = g => g.borrowedByMe ? { bgcolor: 'rgba(255,0,0,0.1)' } : (!g.available ? { bgcolor: 'rgba(0,0,0,0.05)' } : {});
 
     return (
         <Box sx={{ display: 'flex', width: '100%' }}>
             <Box sx={{ width: '100%', flexGrow: 1, width: "100% !important" }}>
                 <Header page="Мої ігри" />
                 <>
-                    {games.length === 0 ? (
+                    {!games ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)' }}>
                             <CircularProgress />
                         </Box>
@@ -141,11 +195,12 @@ export default function MyGamesPage() {
                                             <Grid item size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={g._id}>
                                                 <GameCard
                                                     game={g}
-                                                    onDelete={() => handleDelete(g._id)}
+                                                    // onDelete={() => handleDelete(g._id)}
                                                     onReturn={() => handleReturn(g._id)}
                                                     ownerMap={usersMap}
                                                     usersMap={usersMap}
                                                     currentUserId={currentUserId}
+                                                    onEdit={(game_id) => handleOnEditClick(game_id)}
                                                 />
                                             </Grid>
                                         ))}
@@ -190,7 +245,7 @@ export default function MyGamesPage() {
                                         <Box sx={{ display: "flex", gap: 2 }}>
                                             <Button
                                                 variant="contained"
-                                                disabled={!currentGame.title || !currentGame.platform || !currentGame.available}
+                                                disabled={!currentGame.title || !currentGame.platform}
                                                 onClick={handleOk}
                                             >
                                                 Додати
@@ -226,7 +281,7 @@ export default function MyGamesPage() {
                                                     >
                                                         <ListItemText
                                                             primary={g.title}
-                                                            secondary={`${renderPlatformLabel(g.platform)} — ${g.available === 'yes' ? 'Вільно' : 'Ні'}`}
+                                                            secondary={`${renderPlatformLabel(g.platform)} — ${g.available ? 'Вільно' : 'Ні'}`}
                                                         />
                                                     </ListItem>
                                                 ))}
@@ -239,6 +294,78 @@ export default function MyGamesPage() {
                     )}
                 </>
             </Box>
+            <Modal
+                open={editModalOpen}
+                onClose={handleCloseEditModal}
+                aria-labelledby="edit-modal-title"
+                aria-describedby="edit-modal-description"
+            >
+                <Box sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: "30vw",
+                    height: "30vh",
+                    bgcolor: 'background.paper',
+                    // border: '2px solid #000',
+                    borderRadius: 2,
+                    boxShadow: 24,
+                    p: 4,
+                }}>
+                    <Typography variant="h6" gutterBottom>Редагувати гру</Typography>
+                    <Autocomplete
+                        options={rawgOptions}
+                        getOptionLabel={o => o.name || ''}
+                        onInputChange={handleSearchChange}
+                        onChange={handleSelect}
+                        renderInput={params => <TextField {...params} label={games.find(g => g._id === editGameId).title} fullWidth sx={{ mb: 2 }} required />}
+                    />
+                    <TextField
+                        select
+                        label="Платформа"
+                        value={currentGame.platform}
+                        onChange={e => handleChange('platform', e.target.value)}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        required
+                    >
+                        {['Switch', 'PS5', 'PS4', 'Xbox'].map(v => (
+                            <MenuItem key={v} value={v}>{v}</MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField
+                        select
+                        label="Вільно для позики"
+                        value={currentGame.available}
+                        onChange={e => handleChange('available', e.target.value)}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        required
+                    >
+                        <MenuItem value={true}>Так</MenuItem>
+                        <MenuItem value={false}>Ні</MenuItem>
+                    </TextField>
+                    <Box sx={{ display: 'flex', justifyContent: "space-between", gap: 2, mb: 2 }}>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                            <Button
+                                variant="contained"
+                                color="success"
+                                disabled={!currentGame.title || !currentGame.platform}
+                                onClick={handleSaveEdit}
+                            >
+                                Зберегти зміни
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={() => handleDelete(editGameId)}
+                            >
+                                Видалити
+                            </Button>
+                        </Box>
+                    </Box>
+                </Box>
+            </Modal>
         </Box>
     );
 }

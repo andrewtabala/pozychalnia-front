@@ -1,18 +1,25 @@
 // src/pages/Login.js
 import React, { useState } from 'react';
-import { Container, Typography, Button, TextField, Box, Link, InputAdornment } from '@mui/material';
+import { Container, Typography, Button, TextField, Box, Link, InputAdornment, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, registerUser } from '../api/auth';
+import { updateTelegramContact } from '../api/users';
 
 const Login = () => {
   const navigate = useNavigate();
   // Toggle between login (true) and register (false) modes
   const [isLogin, setIsLogin] = useState(true);
+  const [registerStep, setRegisterStep] = useState(1);
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  const [updateTgData, setUpdateTgData] = useState(false); // State to track if Telegram contact update is needed
 
   const handleToggle = () => {
     setErrorMsg('');
     setIsLogin((prev) => !prev);
+    setRegisterStep(1); // Reset register step when toggling to login
   };
 
   const handleLogin = async (e) => {
@@ -29,35 +36,78 @@ const Login = () => {
       navigate('/');
     } catch (error) {
       console.error('Login error:', error);
+      if (error.response && error.response.data && error.response.data.message && error.response.data.message === "Please update your Telegram data") {
+        setUpdateTgData(true); // Set state to show Telegram contact step
+      }
       setErrorMsg(error.response?.data?.message || 'Login failed');
     }
   };
 
-  const handleRegister = async (e) => {
+  const handleStepChange = (e) => {
+    setUpdateTgData(false);
     e.preventDefault();
-    const { username, email, password, telegramContact } = e.target.elements;
-    // Optionally, you can ensure here that telegramContact.value starts with '@'
-    // For example:
-    const contactValue = telegramContact.value.startsWith('@')
-      ? telegramContact.value
-      : '@' + telegramContact.value;
-    
+    setErrorMsg(''); // Clear error message when changing steps
+    handleRegister(e); // Call register function to handle the current step
+  }
+
+  const handleRegister = async (e) => {
+    setUpdateTgData(false);
+    e.preventDefault();
+    const { username, email, password } = e.target.elements;
+
     try {
-      await registerUser({
+      const data = await registerUser({
         username: username.value,
         email: email.value,
         password: password.value,
-        telegramContact: contactValue,
+        // telegramContact: contactValue,
       });
-      // Optionally, you can log the user in automatically after registration
-      // or prompt the user to login instead:
-      setIsLogin(true);
-      setErrorMsg('Registration successful! Please log in.');
+      setUserId(data.userId); // Store user ID for later use
+      setRegisterStep(2);
+
+      setErrorMsg('Акаунт зареєстровано! Тепер додайте контакт в телеграмі для верифікації.');
     } catch (error) {
       console.error('Registration error:', error);
       setErrorMsg(error.response?.data?.message || 'Registration failed');
     }
   };
+
+  const handleAddTgContact = async (e) => {
+    setUpdateTgData(false);
+    e.preventDefault();
+    setLoading(true);
+    const { telegramContact } = e.target.elements;
+    const contactValue = telegramContact.value.startsWith('@')
+      ? telegramContact.value
+      : '@' + telegramContact.value;
+    try {
+      await updateTelegramContact(userId, contactValue);
+      const es = new EventSource(`${process.env.REACT_APP_API_URL}/stream/user-tg-chat`);
+      es.onopen = () => console.log('✅ SSE connection opened');
+      es.onerror = e => console.error('🚨 SSE error:', e);
+      es.addEventListener('userChange', e => {
+        const user = JSON.parse(e.data);
+        if (user && user.telegramContact && user.telegramContact === contactValue) {
+          if (user.telegramChatId) {
+            es.close(); // Close the SSE connection after verification
+            setIsLogin(true); // Switch to login mode after successful verification
+            setErrorMsg('Контакт в телеграмі верифіковано! Тепер ви можете увійти.');
+            setRegisterStep(1); // Reset register step
+            setUserId(null); // Clear user ID
+
+          }
+        }
+      });
+      window.open("https://t.me/obminenka_bot", '_blank').focus();
+      setLoading(false);
+    }
+    catch (error) {
+      console.error('Error updating Telegram contact:', error);
+      setErrorMsg(error.response?.data?.message || 'Сталася помилка');
+      setLoading(false);
+    }
+
+  }
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
@@ -95,12 +145,25 @@ const Login = () => {
               margin="normal"
               required
             />
+            {updateTgData ? (
+              <Button
+                fullWidth
+                variant="contained"
+                color="secondary"
+                component={Link}
+                href="https://t.me/obminenka_bot"
+                target="_blank"
+                sx={{ mt: 2 }}
+              >
+                Додати контакт в телеграмі
+              </Button>
+            ) : null}
             <Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
               Увійти
             </Button>
           </form>
-        ) : (
-          <form onSubmit={handleRegister}>
+        ) : registerStep === 1 ? (
+          <form onSubmit={handleStepChange}>
             <TextField
               fullWidth
               label="Нікнейм"
@@ -124,6 +187,12 @@ const Login = () => {
               margin="normal"
               required
             />
+            <Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
+              Зареєструватися
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleAddTgContact}>
             <TextField
               fullWidth
               label="Контакт в телеграмі"
@@ -137,7 +206,11 @@ const Login = () => {
               }}
             />
             <Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2 }}>
-              Зареєструватися
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                <span>Верифікувати контакт</span>
+              )}
             </Button>
           </form>
         )}

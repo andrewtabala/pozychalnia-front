@@ -54,6 +54,7 @@ const GameCard = ({
     onDelete,
     onReturn,
     onRequest,
+    onEdit,
 }) => {
     const isOwner = currentUserId && String(game.owner) === currentUserId;
     const owner = usersMap[game.owner];
@@ -65,9 +66,14 @@ const GameCard = ({
                 position: 'relative',
                 borderRadius: 2,
                 overflow: 'hidden',
+                height: '260px',
                 ...getTintStyles(game),
                 // Trigger overlay on hover anywhere in card
                 '&:hover .requestOverlay': {
+                    bgcolor: 'rgba(0, 0, 0, 0.3)',
+                    opacity: 1,
+                },
+                '&:hover .editOverlay': {
                     bgcolor: 'rgba(0, 0, 0, 0.3)',
                     opacity: 1,
                 },
@@ -90,7 +96,7 @@ const GameCard = ({
                         <CloseIcon fontSize="small" />
                     </IconButton>
                 )}
-                {!game.available && !game.borrowedByMe && onReturn && (
+                {!game.available && !game.borrowedByMe && borrower && onReturn && (
                     <IconButton
                         size="small"
                         onClick={() => onReturn(game.loanId)}
@@ -129,7 +135,7 @@ const GameCard = ({
                         </Typography>
                     ) : requested ? (
                         <Typography variant="button" sx={{ color: 'white' }}>
-                            Requested!
+                            Позичено!
                         </Typography>
                     ) : (
                         <Button variant="contained" onClick={() => onRequest(game._id)}>
@@ -138,6 +144,27 @@ const GameCard = ({
                     )}
                 </Box>
             )}
+
+            {onEdit && isOwner && !game.borrowedBy ? (
+                <Box
+                    className="editOverlay"
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'rgba(0, 0, 0, 0)',
+                        opacity: 0,
+                        transition: 'background-color 0.3s, opacity 0.3s',
+                        zIndex: 1,
+                    }}
+                >
+                    <Button variant="contained" onClick={() => onEdit(game._id)}>
+                        Редагувати
+                    </Button>
+                </Box>
+            ) : null}
 
             {/* Game image */}
             <CardMedia
@@ -158,7 +185,7 @@ const GameCard = ({
                             position: 'absolute',
                             top: 8,
                             left: 8,
-                            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                            backgroundColor: '#E4000F ',
                             color: '#fff',
                             fontSize: 12,
                         }}
@@ -179,7 +206,7 @@ const GameCard = ({
                             </Typography>
                         ) : (
                             <Typography variant="caption" display="block" align="center">
-                                Loading owner...
+                                Шукаємо власника...
                             </Typography>
                         )}
                     </>
@@ -198,9 +225,13 @@ const GameCard = ({
                             <Typography variant="caption" display="block" align="center" color="error">
                                 Хто позичив – {borrower.username} ({borrower.telegramContact})
                             </Typography>
+                        ) : !game.available && !game.borrower ? (
+                            <Typography variant="caption" display="block" align="center" color="error">
+                                Гру не можна позичати
+                            </Typography>
                         ) : !game.available ? (
                             <Typography variant="caption" display="block" align="center">
-                                Loading borrower...
+                                Шукаємо позичальника...
                             </Typography>
                         ) : null}
                     </>

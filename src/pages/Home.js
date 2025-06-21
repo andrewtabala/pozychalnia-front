@@ -14,7 +14,7 @@ const Home = () => {
         <Box sx={{ display: 'flex', width: "100%" }}>
             {/* Main content area */}
             <Box component="main" sx={{ flexGrow: 1, p: 0, width: "100% !important" }}>
-                <Header page="Позичальня" />  {/* Optionally, include your header at the top */}
+                <Header page="Обміненька" />  {/* Optionally, include your header at the top */}
                 <Box sx={{ p: 3 }}>
                     <AllGamesGrid isModalOpen isMyGamesOpen /> {/* Your main content, e.g., a grid of games */}
                 </Box>

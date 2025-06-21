@@ -7,6 +7,9 @@ const theme = createTheme({
     primary: {
       main: '#c93636',
     },
+    secondary: {
+      main: '#6ac4af',
+    },
   },
   typography: {
     // Set the new font as the default for your application.

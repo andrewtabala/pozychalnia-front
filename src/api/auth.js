@@ -16,7 +16,6 @@ export const registerUser = async (userData) => {
     throw error;
   }
 };
-
 /**
  * Log in a user.
  * Sends a POST request to /auth/login with the user's email and password.

@@ -72,7 +72,7 @@ export default function BorrowRequestsPage() {
         setHistLoading(true);
         try {
             const data = await getLoanHistory();
-            setHistory(data);
+            setHistory(data.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate)));
         } catch {
             setHistError('Failed to fetch loan history.');
         } finally {
@@ -164,8 +164,8 @@ export default function BorrowRequestsPage() {
                                                     secondary={
                                                         <>
                                                             <Typography variant="body2">Статус: {loan.status === "returned" ? "Повернуто" : loan.status === "approved" ? "Позичено" : loan.status === "pending" ? "Очікує" : "Відхилено"}</Typography>
-                                                            <Typography variant="body2">Власник: {loan.giver.username}</Typography>
-                                                            <Typography variant="body2">Позичальник: {loan.taker.username}</Typography>
+                                                            <Typography variant="body2">Власник: {loan.giver && loan.giver.username ? loan.giver.username : "N/A"}</Typography>
+                                                            <Typography variant="body2">Позичальник: {loan.taker && loan.taker.username ? loan.taker.username : "N/A"}</Typography>
                                                             <Typography variant="body2" color="text.secondary">Позичено: {formatDate(loan.requestDate)}</Typography>
                                                             {loan.returnDate && <Typography variant="body2" color="text.secondary">Повернуто: {formatDate(loan.returnDate)}</Typography>}
                                                         </>
